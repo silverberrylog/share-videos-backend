@@ -6,12 +6,15 @@ import {
     ExecutionContext,
     CallHandler,
     BadRequestException,
+    CanActivate,
+    NotFoundException,
 } from '@nestjs/common'
 import { Observable } from 'rxjs'
 import { PrismaClient } from '@prisma/client'
 import { FastifyRequest } from 'fastify'
 import { plainToInstance } from 'class-transformer'
 import { VideoDto } from '../videos/videos.dto'
+import { Reflector } from '@nestjs/core'
 
 @Injectable()
 export class PrismaService extends PrismaClient implements OnModuleInit {
@@ -64,7 +67,7 @@ export class IsMultipart implements NestInterceptor {
     intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
         const req = context.switchToHttp().getRequest() as FastifyRequest
 
-        const reqIsMultipart = req.headers['content-type'].includes(
+        const reqIsMultipart = req.headers['content-type']?.includes(
             'multipart/form-data',
         )
         if (!reqIsMultipart) {
@@ -74,5 +77,46 @@ export class IsMultipart implements NestInterceptor {
         }
 
         return next.handle()
+    }
+}
+
+@Injectable()
+export class VideoExistsGuard implements CanActivate {
+    constructor(
+        private reflector: Reflector,
+        private readonly prisma: PrismaService,
+    ) {}
+
+    async canActivate(context: ExecutionContext): Promise<boolean> {
+        const videoPublicIdLocation = this.reflector.get<string[]>(
+            'videoPublicIdLocation',
+            context.getHandler(),
+        )
+        if (
+            !videoPublicIdLocation ||
+            !Array.isArray(videoPublicIdLocation) ||
+            videoPublicIdLocation.length < 2
+        )
+            throw new Error(
+                'You must provide an array as videoPublicIdLocation metadata\n' +
+                    '\n' +
+                    "Example: @SetMetadata('videoPublicIdLocation', ['body', 'publicId'])",
+            )
+
+        const req = context.switchToHttp().getRequest() as FastifyRequest
+        const videoPublicId =
+            req[videoPublicIdLocation[0]][videoPublicIdLocation[1]]
+        if (!videoPublicId)
+            throw new BadRequestException(['videoId cannot be undefined'])
+
+        const countWithPublicId = await this.prisma.videos.count({
+            where: { publicId: videoPublicId },
+        })
+        if (countWithPublicId === 0)
+            throw new NotFoundException([
+                'there is no video with the specified id',
+            ])
+
+        return true
     }
 }

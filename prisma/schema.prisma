@@ -8,9 +8,19 @@ datasource db {
 }
 
 model Videos {
-  id            Int      @id @default(autoincrement())
-  publicId      String   @default(uuid())
+  id            Int        @id @default(autoincrement())
+  publicId      String     @unique @default(uuid())
   title         String
-  videoFileName String
+  videoFileName String     @unique
+  createdAt     DateTime   @default(now())
+  comments      Comments[]
+}
+
+model Comments {
+  id            Int      @id @default(autoincrement())
+  text          String
+  commenterName String
   createdAt     DateTime @default(now())
+  video         Videos?  @relation(fields: [videoId], references: [id])
+  videoId       Int?
 }

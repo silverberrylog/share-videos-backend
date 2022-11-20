@@ -19,7 +19,6 @@ export class VideosController {
     @HttpCode(200)
     @UseInterceptors(IsMultipart, PlaceFilesOnBody)
     async postVideo(@Body() body: PostVideoDto, @Req() req: FastifyRequest) {
-        console.log(req.rawFiles)
         const data = await this.videosService.postVideo(
             body.title,
             req.rawFiles.video,
