@@ -1,5 +1,4 @@
 import { NestFastifyApplication } from '@nestjs/platform-fastify'
-import { PostVideoResponseDto } from './videos.dto'
 import { VideosModule } from './videos.module'
 import { expect } from '@jest/globals'
 import { createReadStream } from 'fs'
@@ -8,6 +7,7 @@ import { faker } from '@faker-js/faker'
 import { ErrorDto } from '../../utils/error.dto'
 import buildApp from '../../utils/buildApp'
 import { postVideo } from '../../utils/test-utils'
+import { PostVideoResponseDto } from './dto/post-video.dto'
 
 describe('Testing the videos module', () => {
     let app: NestFastifyApplication

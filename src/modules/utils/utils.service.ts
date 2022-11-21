@@ -13,8 +13,8 @@ import { Observable } from 'rxjs'
 import { PrismaClient } from '@prisma/client'
 import { FastifyRequest } from 'fastify'
 import { plainToInstance } from 'class-transformer'
-import { VideoDto } from '../videos/videos.dto'
 import { Reflector } from '@nestjs/core'
+import { Video } from '../videos/entities/video.entity'
 
 @Injectable()
 export class PrismaService extends PrismaClient implements OnModuleInit {
@@ -55,7 +55,7 @@ export class PlaceFilesOnBody implements NestInterceptor {
             const videoPlainObj = { type, extension, file }
 
             req.rawFiles[key] = videoPlainObj
-            req.body[key] = plainToInstance(VideoDto, videoPlainObj)
+            req.body[key] = plainToInstance(Video, videoPlainObj)
         }
 
         return next.handle()
